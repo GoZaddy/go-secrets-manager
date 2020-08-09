@@ -1,4 +1,4 @@
-package main
+package vault
 
 import (
 	"encoding/hex"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	pathLib "path"
 
 	"github.com/gozaddy/secret.ly/mycrypto"
 	homedir "github.com/mitchellh/go-homedir"
@@ -29,40 +29,56 @@ type FileVaultOptions struct {
 FileVault takes in an encoding key(similar to a password) and file path to the vault. If both parameters are correct and valid, a vault is returned.
 */
 func FileVault(filePath string, options FileVaultOptions) (Vault, error) {
-	var flags int
 	var dataMap map[string]string
-	if options.CreateNew == true {
-		flags = os.O_RDWR | os.O_CREATE
-	} else {
-		flags = os.O_RDWR
-	}
+	var data []byte
+
+	//get home directory
 	home, err := homedir.Dir()
 	if err != nil {
 		return Vault{}, err
 	}
-	path := path.Join(home, filePath)
 
-	_, err = os.OpenFile(path, flags, 0660)
+	//make secret.ly directory
+	path := pathLib.Join(home, "secret.ly")
+	err = os.MkdirAll(path, 0660) //creates path if it doesn't exist
 	if err != nil {
 		return Vault{}, err
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return Vault{}, err
+	//read/create file
+	path = pathLib.Join(path, filePath)
+
+	for {
+		data, err = ioutil.ReadFile(path)
+		if err != nil {
+			if os.IsNotExist(err) && options.CreateNew == true {
+				_, err = os.Create(path)
+				if err != nil {
+					return Vault{}, err
+				}
+				err = writeEmptyMapToFile(path)
+				if err != nil {
+					return Vault{}, err
+				}
+			} else {
+				return Vault{}, err
+			}
+
+		} else {
+			break
+		}
 	}
 
+	//write empty map to file if file's empty
 	if string(data) == "" {
-		fmt.Println("HERE")
-		bs, err := json.Marshal(map[string]string{})
+		err = writeEmptyMapToFile(path)
 		if err != nil {
 			return Vault{}, err
 		}
-		err = ioutil.WriteFile(path, bs, 0660)
+		data, err = ioutil.ReadFile(path)
 		if err != nil {
 			return Vault{}, err
 		}
-		data = []byte("{}")
 	}
 	fmt.Println("data:", string(data))
 
@@ -99,4 +115,16 @@ func (v Vault) Set(keyname, keyvalue, encodingKey string) error {
 	}
 	return nil
 
+}
+
+func writeEmptyMapToFile(path string) error {
+	bs, err := json.Marshal(map[string]string{})
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(path, bs, 0660)
+	if err != nil {
+		return err
+	}
+	return nil
 }
