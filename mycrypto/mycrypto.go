@@ -22,7 +22,6 @@ func Decrypt(key, cipherHex string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	if len(ciphertext) < aes.BlockSize {
 		return "", errors.New("encrypt: cipher too short")
 	}
@@ -62,10 +61,6 @@ func Encrypt(key, plaintext string) (string, error) {
 func newCipherBlock(key string) (cipher.Block, error) {
 	hasher := md5.New()
 	fmt.Fprintf(hasher, key)
-
 	bs := hasher.Sum(nil)
-
-	fmt.Println(string(bs))
-
 	return aes.NewCipher(bs[:])
 }

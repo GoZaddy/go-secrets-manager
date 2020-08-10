@@ -92,7 +92,7 @@ func FileVault(filePath string, options FileVaultOptions) (Vault, error) {
 
 //Get retrives a secret using a keyname
 func (v Vault) Get(keyname, encodingKey string) (string, error) {
-	result, err := mycrypto.Decrypt(encodingKey, hex.EncodeToString([]byte(v.data[keyname])))
+	result, err := mycrypto.Decrypt(encodingKey, v.data[keyname])
 	return result, err
 }
 
@@ -102,7 +102,8 @@ func (v Vault) Set(keyname, keyvalue, encodingKey string) error {
 	if err != nil {
 		return err
 	}
-	v.data[keyname] = result
+
+	v.data[keyname] = hex.EncodeToString([]byte(result))
 	bs, err := json.Marshal(v.data)
 	if err != nil {
 		return err
