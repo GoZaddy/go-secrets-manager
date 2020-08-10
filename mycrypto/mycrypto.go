@@ -65,5 +65,7 @@ func newCipherBlock(key string) (cipher.Block, error) {
 
 	bs := hasher.Sum(nil)
 
+	fmt.Println(string(bs))
+
 	return aes.NewCipher(bs[:])
 }

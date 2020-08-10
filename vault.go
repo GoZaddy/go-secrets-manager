@@ -3,7 +3,6 @@ package vault
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	pathLib "path"
@@ -80,7 +79,6 @@ func FileVault(filePath string, options FileVaultOptions) (Vault, error) {
 			return Vault{}, err
 		}
 	}
-	fmt.Println("data:", string(data))
 
 	err = json.Unmarshal(data, &dataMap)
 	if err != nil {
